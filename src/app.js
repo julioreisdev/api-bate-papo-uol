@@ -27,7 +27,7 @@ app.get("/participants", async (req, res) => {
     const users = await db.collection("users").find().toArray();
     res.send(users);
   } catch (error) {
-    console.log(error);
+    res.send(error).status(500);
   }
 });
 
@@ -55,7 +55,7 @@ app.post("/participants", async (req, res) => {
       res.sendStatus(201);
     }
   } catch (error) {
-    console.log(error);
+    res.send(error).status(500);
   }
 });
 
