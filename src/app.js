@@ -133,6 +133,19 @@ app.get("/messages", async (req, res) => {
   res.send(totalMensagensVisiveis);
 });
 
+app.post("/status", async (req, res) => {
+  const user = req.headers.user;
+  const userExiste = await db.collection("users").findOne({ name: user });
+  if (!userExiste) {
+    res.sendStatus(404);
+    return;
+  }
+  await db
+    .collection("users")
+    .updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
+  res.sendStatus(200);
+});
+
 app.listen(5000, () => {
   console.log("Servidor rodando");
 });
