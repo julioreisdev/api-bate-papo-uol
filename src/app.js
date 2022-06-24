@@ -78,18 +78,26 @@ app.post("/messages", async (req, res) => {
     res.status(422).send(detalhes);
     return;
   }
-  const user = await db.collection("users").findOne({ name: from });
-  if (!user) {
-    res.status(422).send("Invalid user!");
-    return;
+  try {
+    const user = await db.collection("users").findOne({ name: from });
+    if (!user) {
+      res.status(422).send("Invalid user!");
+      return;
+    }
+  } catch (error) {
+    res.status(500).send(error);
   }
-  await db.collection("messages").insertOne({
-    to: req.body.to,
-    text: req.body.text,
-    type: req.body.type,
-    from: from,
-    time: dayjs().format("HH:mm:ss"),
-  });
+  try {
+    await db.collection("messages").insertOne({
+      to: req.body.to,
+      text: req.body.text,
+      type: req.body.type,
+      from: from,
+      time: dayjs().format("HH:mm:ss"),
+    });
+  } catch (error) {
+    res.status(500).send(error);
+  }
   res.sendStatus(201);
 });
 
@@ -97,11 +105,24 @@ app.get("/messages", async (req, res) => {
   const limite = req.query.limit;
   const user = req.headers.user;
   let mensagens;
-  mensagens = await db
-    .collection("messages")
-    .find()
-    .sort({ time: -1 })
-    .toArray();
+  try {
+    const userExiste = await db.collection("users").findOne({ name: user });
+    if (!userExiste) {
+      res.status(404).send("Invalid user");
+      return;
+    }
+  } catch (error) {
+    res.status(500).send(error);
+  }
+  try {
+    mensagens = await db
+      .collection("messages")
+      .find()
+      .sort({ $natural: -1 })
+      .toArray();
+  } catch (error) {
+    res.status(500).send(error);
+  }
   const mensagensValidas = mensagens.filter((mensagen) => {
     if (
       mensagen.to === "Todos" ||
@@ -135,14 +156,22 @@ app.get("/messages", async (req, res) => {
 
 app.post("/status", async (req, res) => {
   const user = req.headers.user;
-  const userExiste = await db.collection("users").findOne({ name: user });
-  if (!userExiste) {
-    res.sendStatus(404);
-    return;
+  try {
+    const userExiste = await db.collection("users").findOne({ name: user });
+    if (!userExiste) {
+      res.sendStatus(404);
+      return;
+    }
+  } catch (error) {
+    res.status(500).send(error);
   }
-  await db
-    .collection("users")
-    .updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
+  try {
+    await db
+      .collection("users")
+      .updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
+  } catch (error) {
+    res.status(500).send(error);
+  }
   res.sendStatus(200);
 });
 
