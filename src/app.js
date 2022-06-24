@@ -32,9 +32,12 @@ app.get("/participants", async (req, res) => {
 });
 
 app.post("/participants", async (req, res) => {
-  const { error, values } = userSchema.validate(req.body);
+  const { error, values } = userSchema.validate(req.body, {
+    abortEarly: false,
+  });
   if (error) {
-    res.sendStatus(422);
+    const detalhes = error.details.map((detail) => detail.message);
+    res.status(422).send(detalhes);
     return;
   }
   try {
