@@ -175,6 +175,42 @@ app.post("/status", async (req, res) => {
   res.sendStatus(200);
 });
 
+//DELETA USER INATIVO
+setInterval(async () => {
+  let usuarios;
+  try {
+    usuarios = await db.collection("users").find().toArray();
+  } catch (error) {
+    console.log(error);
+  }
+  for (let i = 0; i < usuarios.length; i++) {
+    let hora = Date.now();
+    if (hora - usuarios[i].lastStatus >= 10000) {
+      let userDeleted;
+      try {
+        userDeleted = await db
+          .collection("users")
+          .deleteOne({ name: usuarios[i].name });
+        if (userDeleted) {
+          try {
+            await db.collection("messages").insertOne({
+              from: usuarios[i].name,
+              to: "Todos",
+              text: "sai da sala...",
+              type: "status",
+              time: dayjs().format("HH:mm:ss"),
+            });
+          } catch (error) {
+            console.log(error);
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  }
+}, 15000);
+
 app.listen(5000, () => {
   console.log("Servidor rodando");
 });
