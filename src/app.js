@@ -26,6 +26,7 @@ const messageSchema = Joi.object({
   to: Joi.string().min(1).required(),
   text: Joi.string().min(1).required(),
   type: Joi.string().valid("message", "private_message").required(),
+  from: Joi.string().min(1).required()
 });
 
 app.get("/participants", async (req, res) => {
@@ -69,7 +70,12 @@ app.post("/participants", async (req, res) => {
 });
 
 app.post("/messages", async (req, res) => {
-  const { error, values } = messageSchema.validate(req.body, {
+  const { error, values } = messageSchema.validate({
+    to: req.body.to,
+    text: req.body.text,
+    type: req.body.type,
+    from: req.headers.user
+  }, {
     abortEarly: false,
   });
   const from = req.headers.user;
@@ -209,7 +215,7 @@ setInterval(async () => {
       }
     }
   }
-}, 15000);
+}, 10000000);
 
 app.listen(5000, () => {
   console.log("Servidor rodando");
